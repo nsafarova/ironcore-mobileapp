@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IronCore — App Prototype v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0C0C0E;--surface:#141416;--raised:#1C1C20;--border:#252528;--border-hi:#303035;--muted:#52525A;--sub:#8C8C96;--body:#C4C4CC;--title:#F0F0F4;--blue:#3B82F6;--blue-dim:rgba(59,130,246,0.12);--blue-line:rgba(59,130,246,0.3);--green:#10B981;--green-dim:rgba(16,185,129,0.1);--amber:#F59E0B;--cyan:#06B6D4;--fd:'Syne',sans-serif;--fb:'Inter',sans-serif;--fm:'JetBrains Mono',monospace}
+body{background:#080809;font-family:var(--fb);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px 80px}
+.presenter{width:100%;max-width:880px}
+.presenter-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;flex-wrap:wrap;gap:12px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-mark{width:30px;height:30px;background:var(--blue);border-radius:6px;display:flex;align-items:center;justify-content:center}
+.brand-mark span{font-family:var(--fd);font-size:12px;font-weight:800;color:white;letter-spacing:-0.03em}
+.brand-name{font-family:var(--fd);font-size:18px;font-weight:700;color:var(--title);letter-spacing:-0.01em}
+.brand-name em{color:var(--blue);font-style:normal}
+.brand-tag{font-family:var(--fm);font-size:10px;color:var(--muted);letter-spacing:0.06em}
+.flow-nav{display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px}
+.flow-btn{font-family:var(--fb);font-size:11px;font-weight:500;padding:6px 14px;border:none;border-radius:6px;cursor:pointer;background:transparent;color:var(--sub);transition:all .15s;letter-spacing:.01em}
+.flow-btn.active{background:var(--blue);color:white}
+.layout{display:grid;grid-template-columns:1fr 260px;gap:28px;align-items:start}
+.phone-wrap{display:flex;flex-direction:column;align-items:center;gap:10px}
+.phone{width:290px;height:610px;background:var(--bg);border-radius:42px;border:1px solid var(--border-hi);box-shadow:0 0 0 1px rgba(255,255,255,0.04) inset,0 40px 80px rgba(0,0,0,.7);overflow:hidden;position:relative;flex-shrink:0}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:90px;height:26px;background:var(--bg);border-radius:0 0 16px 16px;z-index:100;display:flex;align-items:center;justify-content:center;gap:5px}
+.notch-dot{width:7px;height:7px;border-radius:50%;background:var(--border-hi)}
+.notch-pill{width:36px;height:5px;background:var(--border-hi);border-radius:3px}
+.phone-inner{width:100%;height:100%;overflow:hidden;position:relative}
+.screen{position:absolute;inset:0;background:var(--bg);overflow-y:auto;overflow-x:hidden;display:none;flex-direction:column;scrollbar-width:none}
+.screen::-webkit-scrollbar{display:none}
+.screen.active{display:flex}
+.screen.enter{animation:enter .2s cubic-bezier(.25,1,.5,1) both}
+@keyframes enter{from{transform:translateX(28px);opacity:0}to{transform:none;opacity:1}}
+.sbar{height:32px;flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between;padding:0 18px 5px}
+.sbar-time{font-family:var(--fm);font-size:10px;color:var(--body)}
+.sbar-icons span{font-family:var(--fm);font-size:9px;color:var(--sub)}
+.back{display:inline-flex;align-items:center;gap:4px;font-family:var(--fb);font-size:12px;font-weight:500;color:var(--blue);background:none;border:none;cursor:pointer;padding:0;margin:8px 18px 0}
+.back svg{width:14px;height:14px;stroke:var(--blue);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pg-head{padding:10px 18px 16px}
+.pg-label{font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+.pg-title{font-family:var(--fd);font-size:24px;font-weight:700;color:var(--title);letter-spacing:-.02em;line-height:1.1}
+.steps{display:flex;align-items:center;gap:4px;padding:0 18px 14px}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--border-hi);transition:all .2s}
+.dot.on{background:var(--blue);width:16px;border-radius:3px}
+.dot.done{background:var(--blue);opacity:.4}
+.step-txt{font-family:var(--fm);font-size:9px;color:var(--muted);margin-left:auto}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:72px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.bnav{position:absolute;bottom:0;left:0;right:0;height:64px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;padding-bottom:6px}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;background:none;border:none;padding:8px 0}
+.bnav-item svg{width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;transition:stroke .15s}
+.bnav-item span{font-family:var(--fb);font-size:9px;font-weight:500;color:var(--muted);letter-spacing:.02em;transition:color .15s}
+.bnav-item.on svg{stroke:var(--blue)}
+.bnav-item.on span{color:var(--blue)}
+/* HOME */
+.home-header{padding:18px 18px 20px;border-bottom:1px solid var(--border)}
+.home-greeting{font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.home-name{font-family:var(--fd);font-size:22px;font-weight:700;color:var(--title);letter-spacing:-.02em}
+.home-name em{color:var(--blue);font-style:normal}
+.streak-pill{display:inline-flex;align-items:center;gap:5px;margin-top:10px;padding:4px 10px;background:var(--blue-dim);border:1px solid var(--blue-line);border-radius:20px}
+.streak-pill span{font-family:var(--fm);font-size:9px;color:var(--blue);letter-spacing:.06em;text-transform:uppercase}
+.stats-row{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)}
+.stat-cell{padding:14px 18px}
+.stat-cell:first-child{border-right:1px solid var(--border)}
+.stat-n{font-family:var(--fd);font-size:28px;font-weight:700;color:var(--title);letter-spacing:-.02em;line-height:1}
+.stat-n.blue{color:var(--blue)}
+.stat-l{font-family:var(--fb);font-size:10px;color:var(--muted);margin-top:3px}
+.home-section{padding:16px 18px 0}
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sec-title{font-family:var(--fb);font-size:10px;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.08em}
+.sec-link{font-family:var(--fm);font-size:9px;color:var(--blue);letter-spacing:.06em;background:none;border:none;cursor:pointer}
+.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.qa-btn{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:left;cursor:pointer;transition:border-color .15s}
+.qa-btn:hover{border-color:var(--border-hi)}
+.qa-btn:active{background:var(--raised)}
+.qa-icon{width:24px;height:24px;margin-bottom:10px;stroke:var(--blue);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.qa-btn:nth-child(2) .qa-icon{stroke:var(--cyan)}
+.qa-label{font-family:var(--fd);font-size:13px;font-weight:600;color:var(--title);letter-spacing:-.01em}
+.qa-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.upsell-card{background:var(--surface);border:1px solid var(--border-hi);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-top:8px;transition:border-color .15s}
+.upsell-card:hover{border-color:var(--blue-line)}
+.upsell-icon{width:36px;height:36px;background:var(--blue-dim);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.upsell-icon svg{width:18px;height:18px;stroke:var(--blue);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.upsell-label{font-family:var(--fm);font-size:9px;color:var(--blue);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
+.upsell-title{font-family:var(--fd);font-size:13px;font-weight:600;color:var(--title);letter-spacing:-.01em}
+.upsell-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.upcoming-item{padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:10px}
+.upcoming-item:last-child{border-bottom:none}
+.upcoming-t{font-family:var(--fd);font-size:16px;font-weight:700;color:var(--title);line-height:1;letter-spacing:-.01em;min-width:42px}
+.upcoming-ampm{font-family:var(--fm);font-size:8px;color:var(--muted);letter-spacing:.08em}
+.upcoming-name{font-family:var(--fd);font-size:13px;font-weight:600;color:var(--title);letter-spacing:-.01em}
+.upcoming-meta{font-size:10px;color:var(--muted);margin-top:2px}
+.badge-sm{font-family:var(--fm);font-size:8px;color:var(--blue);background:var(--blue-dim);border:1px solid var(--blue-line);padding:2px 7px;border-radius:3px;letter-spacing:.06em;flex-shrink:0}
+/* SCHEDULE */
+.date-row{display:flex;gap:4px;padding:0 18px 14px;overflow-x:auto;scrollbar-width:none}
+.date-row::-webkit-scrollbar{display:none}
+.date-pill{flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding:7px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:all .12s}
+.date-pill.today{border-color:var(--border-hi)}
+.date-pill.sel{background:var(--blue);border-color:var(--blue)}
+.dp-day{font-family:var(--fm);font-size:8px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.dp-num{font-family:var(--fd);font-size:17px;font-weight:700;color:var(--body);line-height:1.2}
+.date-pill.sel .dp-day{color:rgba(255,255,255,.7)}
+.date-pill.sel .dp-num{color:white}
+.filters{display:flex;gap:6px;padding:0 18px 14px;overflow-x:auto;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;font-family:var(--fb);font-size:10px;font-weight:500;padding:5px 11px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--sub);cursor:pointer;transition:all .12s}
+.chip.sel{background:var(--raised);border-color:var(--border-hi);color:var(--body)}
+.class-list{padding:0 18px;display:flex;flex-direction:column}
+.class-item{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.class-item:last-child{border-bottom:none}
+.class-item.full{opacity:.4;cursor:default}
+.ci-time{min-width:46px}
+.ci-t{font-family:var(--fd);font-size:17px;font-weight:700;color:var(--title);line-height:1}
+.ci-ap{font-family:var(--fm);font-size:8px;color:var(--muted);letter-spacing:.08em;margin-top:1px}
+.ci-line{width:1px;height:32px;background:var(--border-hi);flex-shrink:0}
+.ci-info{flex:1}
+.ci-name{font-family:var(--fd);font-size:13px;font-weight:600;color:var(--title);letter-spacing:-.01em}
+.ci-meta{font-size:10px;color:var(--muted);margin-top:2px}
+.ci-spots{font-family:var(--fm);font-size:9px;text-align:right}
+.ci-spots.few{color:var(--amber)}
+.ci-spots.ok{color:var(--sub)}
+.ci-spots.none{color:var(--muted)}
+/* DETAIL */
+.detail-head{padding:14px 18px 18px;border-bottom:1px solid var(--border)}
+.detail-type{font-family:var(--fm);font-size:9px;color:var(--blue);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+.detail-name{font-family:var(--fd);font-size:26px;font-weight:700;color:var(--title);letter-spacing:-.02em;line-height:1.05}
+.detail-trainer{font-size:11px;color:var(--sub);margin-top:8px}
+.detail-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.dchip{font-family:var(--fm);font-size:9px;color:var(--sub);background:var(--raised);border:1px solid var(--border-hi);padding:3px 9px;border-radius:4px;letter-spacing:.06em}
+.dchip.hi{color:var(--blue);border-color:var(--blue-line);background:var(--blue-dim)}
+.detail-section{padding:14px 18px;border-bottom:1px solid var(--border)}
+.ds-title{font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+.avail-bar-row{display:flex;justify-content:space-between;margin-bottom:6px}
+.avail-bar-row span{font-size:10px;color:var(--sub)}
+.avail-bar-row strong{color:var(--body);font-weight:500}
+.avail-track{height:2px;background:var(--border-hi);border-radius:1px}
+.avail-fill{height:100%;background:var(--blue);border-radius:1px}
+.trainer-row{display:flex;align-items:center;gap:10px}
+.trainer-av{width:36px;height:36px;background:var(--raised);border:1px solid var(--border-hi);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.trainer-av span{font-family:var(--fd);font-size:12px;font-weight:700;color:var(--blue)}
+.trainer-name{font-family:var(--fd);font-size:13px;font-weight:600;color:var(--title)}
+.trainer-role{font-size:10px;color:var(--muted);margin-top:1px}
+.desc-text{font-size:11px;color:var(--sub);line-height:1.7}
+.book-bar{padding:14px 18px 18px}
+.book-btn{width:100%;background:var(--blue);color:white;font-family:var(--fd);font-size:15px;font-weight:600;letter-spacing:-.01em;border:none;cursor:pointer;padding:14px;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
+.book-btn:active{opacity:.85}
+.book-btn svg{width:16px;height:16px;stroke:white;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* CONFIRM */
+.confirm-body{display:flex;flex-direction:column;align-items:center;padding:28px 20px;text-align:center}
+.confirm-icon{width:64px;height:64px;border-radius:50%;background:var(--green-dim);border:1px solid rgba(16,185,129,.3);display:flex;align-items:center;justify-content:center;margin-bottom:18px;animation:pop .4s cubic-bezier(.25,1,.5,1) both .1s}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+.confirm-icon svg{width:28px;height:28px;stroke:var(--green);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.confirm-tag{font-family:var(--fm);font-size:9px;color:var(--green);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+.confirm-title{font-family:var(--fd);font-size:28px;font-weight:700;color:var(--title);letter-spacing:-.02em;line-height:1}
+.confirm-sub{font-size:11px;color:var(--sub);margin-top:8px;line-height:1.6}
+.confirm-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;width:100%;padding:14px 16px;margin:20px 0;text-align:left}
+.cc-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+.cc-row:last-child{border-bottom:none}
+.cc-l{font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.cc-v{font-family:var(--fd);font-size:12px;font-weight:600;color:var(--title)}
+.confirm-actions{display:flex;flex-direction:column;gap:8px;width:100%}
+.btn-prim{width:100%;background:var(--blue);color:white;font-family:var(--fd);font-size:14px;font-weight:600;letter-spacing:-.01em;border:none;cursor:pointer;padding:13px;border-radius:10px;transition:opacity .15s}
+.btn-sec{width:100%;background:var(--surface);color:var(--sub);font-family:var(--fd);font-size:13px;font-weight:500;border:1px solid var(--border);cursor:pointer;padding:11px;border-radius:10px;transition:border-color .15s}
+/* CHECKIN */
+.ci-member-row{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border)}
+.ci-avatar{width:40px;height:40px;background:var(--raised);border:1px solid var(--border-hi);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ci-avatar span{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--blue)}
+.ci-mem-name{font-family:var(--fd);font-size:16px;font-weight:700;color:var(--title);letter-spacing:-.01em}
+.ci-mem-id{font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:.08em;margin-top:2px}
+.qr-section{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:12px}
+.qr-label{font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.qr-box{width:140px;height:140px;background:white;padding:10px;position:relative;border-radius:4px}
+.qr-corner{position:absolute;width:28px;height:28px;border:3px solid #0C0C0E}
+.qr-corner.tl{top:8px;left:8px;border-right:none;border-bottom:none}
+.qr-corner.tr{top:8px;right:8px;border-left:none;border-bottom:none}
+.qr-corner.bl{bottom:8px;left:8px;border-right:none;border-top:none}
+.qr-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
+.qr-center div{background:#0C0C0E;border-radius:1px}
+.qr-center div:nth-child(even){background:white}
+.qr-id{font-family:var(--fm);font-size:11px;color:var(--body);letter-spacing:.18em}
+.loc-row{display:flex;gap:6px;padding:0 18px}
+.loc-btn{flex:1;font-family:var(--fb);font-size:10px;font-weight:500;padding:8px 6px;text-align:center;cursor:pointer;background:var(--surface);border:1px solid var(--border);color:var(--sub);border-radius:7px;transition:all .12s}
+.loc-btn.sel{background:var(--blue-dim);border-color:var(--blue-line);color:var(--blue)}
+.ci-btn{margin:12px 18px 0;width:calc(100% - 36px);background:var(--blue);color:white;font-family:var(--fd);font-size:15px;font-weight:600;letter-spacing:-.01em;border:none;cursor:pointer;padding:14px;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+.ci-btn svg{width:16px;height:16px;stroke:white;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.recent-list{padding:14px 18px}
+.rl-label{font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.rl-item{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)}
+.rl-item:last-child{border-bottom:none}
+.rl-date{font-family:var(--fm);font-size:8px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.rl-name{font-family:var(--fd);font-size:12px;font-weight:600;color:var(--title);letter-spacing:-.01em}
+.rl-loc{font-size:10px;color:var(--muted);margin-top:1px}
+.rl-check{width:18px;height:18px;background:var(--green-dim);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.rl-check svg{width:10px;height:10px;stroke:var(--green);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+/* CI SUCCESS */
+.ci-success-head{padding:18px 18px 20px;border-bottom:1px solid var(--border)}
+.success-icon-lg{width:56px;height:56px;border-radius:50%;background:var(--green-dim);border:1px solid rgba(16,185,129,.3);display:flex;align-items:center;justify-content:center;margin-bottom:14px;animation:pop .4s cubic-bezier(.25,1,.5,1) both .05s}
+.success-icon-lg svg{width:24px;height:24px;stroke:var(--green);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.detail-rows{padding:0 18px}
+.dr-item{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
+.dr-item:last-child{border-bottom:none}
+.dr-l{font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.dr-v{font-family:var(--fd);font-size:13px;font-weight:600;color:var(--title)}
+.dr-v.green{color:var(--green)}
+/* PREMIUM */
+.billing-toggle{display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px;margin:12px 18px 0}
+.bt-tab{flex:1;font-family:var(--fb);font-size:10px;font-weight:500;padding:6px 8px;border:none;border-radius:6px;cursor:pointer;background:transparent;color:var(--sub);transition:all .15s;text-align:center}
+.bt-tab.on{background:var(--raised);color:var(--body)}
+.plan-list{padding:12px 18px 0;display:flex;flex-direction:column;gap:8px}
+.plan-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color .15s;position:relative}
+.plan-card.sel{border-color:var(--blue)}
+.feat-badge{position:absolute;top:-1px;right:14px;font-family:var(--fm);font-size:8px;color:white;background:var(--blue);padding:2px 8px;border-radius:0 0 4px 4px;letter-spacing:.08em;text-transform:uppercase}
+.pc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.pc-name{font-family:var(--fd);font-size:15px;font-weight:700;color:var(--title);letter-spacing:-.01em}
+.pc-current{font-family:var(--fm);font-size:8px;color:var(--muted);margin-top:2px;letter-spacing:.06em}
+.pc-price{font-family:var(--fd);font-size:22px;font-weight:700;color:var(--title);line-height:1;letter-spacing:-.02em;text-align:right}
+.pc-price.hi{color:var(--blue)}
+.pc-billing{font-family:var(--fm);font-size:8px;color:var(--muted);text-align:right;margin-top:2px}
+.pc-div{height:1px;background:var(--border);margin:10px 0}
+.pc-feat{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.pc-feat svg{width:12px;height:12px;flex-shrink:0}
+.pc-feat span{font-size:10px;color:var(--sub)}
+.pc-feat.dim span{color:var(--muted);text-decoration:line-through}
+.save-note{margin:10px 18px 0;padding:9px 12px;background:var(--blue-dim);border:1px solid var(--blue-line);border-radius:8px;display:flex;align-items:center;gap:8px}
+.save-note svg{width:13px;height:13px;stroke:var(--blue);fill:none;stroke-width:2;flex-shrink:0}
+.save-note span{font-size:10px;color:var(--blue)}
+.upgrade-wrap{padding:12px 18px 0}
+.upgrade-btn{width:100%;background:var(--blue);color:white;font-family:var(--fd);font-size:15px;font-weight:600;letter-spacing:-.01em;border:none;cursor:pointer;padding:14px;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
+.upgrade-btn svg{width:15px;height:15px;stroke:white;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.upgrade-legal{font-family:var(--fm);font-size:8px;color:var(--muted);text-align:center;margin-top:8px;letter-spacing:.04em;line-height:1.6}
+/* PAYMENT */
+.pay-summary{margin:0 18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.pay-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)}
+.pay-row:last-child{border-bottom:none}
+.pay-l{font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.pay-v{font-family:var(--fd);font-size:12px;font-weight:600;color:var(--title)}
+.pay-v.hi{color:var(--blue)}
+.pay-v.lg{font-size:18px}
+.field-stack{padding:12px 18px 0;display:flex;flex-direction:column;gap:8px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.field-input{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--sub);font-family:var(--fb);font-size:12px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between}
+.field-input svg{width:14px;height:14px;stroke:var(--muted);fill:none;stroke-width:1.5}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pay-btn-wrap{padding:12px 18px 0}
+.pay-btn{width:100%;background:var(--blue);color:white;font-family:var(--fd);font-size:15px;font-weight:600;border:none;cursor:pointer;padding:14px;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+.pay-btn svg{width:15px;height:15px;stroke:white;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pay-secure{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:8px}
+.pay-secure svg{width:10px;height:10px;stroke:var(--muted);fill:none;stroke-width:2}
+.pay-secure span{font-family:var(--fm);font-size:8px;color:var(--muted);letter-spacing:.06em}
+/* PREMIUM SUCCESS */
+.psuc-head{padding:18px 18px 20px;border-bottom:1px solid var(--border)}
+.psuc-icon{width:56px;height:56px;border-radius:12px;background:var(--blue-dim);border:1px solid var(--blue-line);display:flex;align-items:center;justify-content:center;margin-bottom:14px;animation:pop .4s cubic-bezier(.25,1,.5,1) both .05s}
+.psuc-icon svg{width:24px;height:24px;stroke:var(--blue);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.unlocked-list{padding:14px 18px}
+.ul-label{font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.ul-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.ul-item:last-child{border-bottom:none}
+.ul-icon{width:32px;height:32px;background:var(--raised);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ul-icon svg{width:16px;height:16px;stroke:var(--blue);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.ul-name{font-family:var(--fd);font-size:12px;font-weight:600;color:var(--title);letter-spacing:-.01em}
+.ul-sub{font-size:10px;color:var(--muted);margin-top:1px}
+/* SIDEBAR */
+.sidebar{display:flex;flex-direction:column;gap:12px}
+.scard{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.scard-title{font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.flow-step{display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.flow-step:last-child{border-bottom:none}
+.fs-num{width:20px;height:20px;border-radius:50%;background:var(--raised);border:1px solid var(--border-hi);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--fm);font-size:9px;color:var(--muted);margin-top:1px}
+.flow-step.on .fs-num{background:var(--blue);border-color:var(--blue);color:white}
+.flow-step.done .fs-num{color:var(--green)}
+.flow-step.dim{opacity:.35}
+.fs-name{font-family:var(--fb);font-size:11px;font-weight:500;color:var(--body)}
+.fs-desc{font-size:10px;color:var(--muted);margin-top:1px;line-height:1.4}
+.annot{background:var(--raised);border-left:2px solid var(--blue);padding:9px 10px;border-radius:0 4px 4px 0;margin-top:4px}
+.annot-label{font-family:var(--fm);font-size:8px;color:var(--blue);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.annot-text{font-size:10px;color:var(--sub);line-height:1.6}
+.kpi-stack{display:flex;flex-direction:column;gap:6px}
+.kpi-item{display:flex;justify-content:space-between;align-items:center;padding:7px 9px;background:var(--raised);border-radius:6px}
+.kpi-l{font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:.06em}
+.kpi-v{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--title)}
+.kpi-v.blue{color:var(--blue)}
+.kpi-v.green{color:var(--green)}
+.screen-lbl{font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;text-align:center}
+@media(max-width:660px){.layout{grid-template-columns:1fr}.sidebar{display:none}.phone{width:272px;height:576px}}
+</style>
+</head>
+<body>
+<div class="presenter">
+<div class="presenter-top">
+<div style="display:flex;align-items:center;gap:16px">
+<div class="brand"><div class="brand-mark"><span>IC</span></div><div class="brand-name">Iron<em>Core</em></div></div>
+<div class="brand-tag">App Prototype · v2.0 Minimal</div>
+</div>
+<div class="flow-nav">
+<button class="flow-btn active" onclick="setFlow('booking',this)">Class Booking</button>
+<button class="flow-btn" onclick="setFlow('checkin',this)">Check-In</button>
+<button class="flow-btn" onclick="setFlow('premium',this)">Premium — US-07</button>
+</div>
+</div>
+<div class="layout">
+<div class="phone-wrap">
+<div class="phone">
+<div class="notch"><div class="notch-dot"></div><div class="notch-pill"></div><div class="notch-dot"></div></div>
+<div class="phone-inner">
+
+<!-- HOME -->
+<div class="screen active" id="s-home">
+<div class="sbar"><span class="sbar-time">9:41</span><div class="sbar-icons"><span>●●●</span></div></div>
+<div class="home-header">
+<div class="home-greeting">Good morning</div>
+<div class="home-name">Jessica <em>Ramirez</em></div>
+<div class="streak-pill"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><span>7-day streak</span></div>
+</div>
+<div class="stats-row">
+<div class="stat-cell"><div class="stat-n">14</div><div class="stat-l">Classes this month</div></div>
+<div class="stat-cell"><div class="stat-n blue">3</div><div class="stat-l">Upcoming booked</div></div>
+</div>
+<div class="scroll">
+<div class="home-section">
+<div class="sec-hd"><span class="sec-title">Quick Actions</span></div>
+<div class="qa-grid">
+<button class="qa-btn" onclick="goTo('s-schedule','in')">
+<svg class="qa-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+<div class="qa-label">Book a Class</div><div class="qa-sub">View schedule</div>
+</button>
+<button class="qa-btn" onclick="goTo('s-checkin','in')">
+<svg class="qa-icon" viewBox="0 0 24 24" style="stroke:var(--cyan)"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+<div class="qa-label">Check In</div><div class="qa-sub">Show QR at door</div>
+</button>
+</div>
+<div class="upsell-card" onclick="goTo('s-premium','in')">
+<div class="upsell-icon"><svg viewBox="0 0 24 24"><path d="M2 20h20M5 20l-2-8 5 4 4-8 4 8 5-4-2 8"/></svg></div>
+<div class="upsell-text"><div class="upsell-label">Upgrade Available</div><div class="upsell-title">Go Premium</div><div class="upsell-sub">On-demand · Nutrition · Analytics</div></div>
+<div style="color:var(--muted);font-size:16px">›</div>
+</div>
+</div>
+<div class="home-section" style="margin-top:16px">
+<div class="sec-hd"><span class="sec-title">Upcoming</span><button class="sec-link" onclick="goTo('s-schedule','in')">See all</button></div>
+<div class="upcoming-item" onclick="goTo('s-detail','in')">
+<div><div class="upcoming-t">6:00</div><div class="upcoming-ampm">AM · TUE</div></div>
+<div style="flex:1"><div class="upcoming-name">Boot Camp</div><div class="upcoming-meta">Big Jim · Downtown</div></div>
+<span class="badge-sm">Booked</span>
+</div>
+<div class="upcoming-item" style="opacity:.6">
+<div><div class="upcoming-t">7:30</div><div class="upcoming-ampm">AM · THU</div></div>
+<div style="flex:1"><div class="upcoming-name">Spin Class</div><div class="upcoming-meta">Maria Chen · Westside</div></div>
+<span class="badge-sm">Booked</span>
+</div>
+</div>
+</div>
+<div class="bnav">
+<button class="bnav-item on"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></button>
+<button class="bnav-item" onclick="goTo('s-schedule','in')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Schedule</span></button>
+<button class="bnav-item" onclick="goTo('s-checkin','in')"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>Check In</span></button>
+<button class="bnav-item"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></button>
+</div>
+</div>
+
+<!-- SCHEDULE -->
+<div class="screen" id="s-schedule">
+<div class="sbar"><span class="sbar-time">9:41</span><div class="sbar-icons"><span>●●●</span></div></div>
+<button class="back" onclick="goBack('s-home')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Home</button>
+<div class="pg-head"><div class="pg-label">IronCore Fitness</div><div class="pg-title">Schedule</div></div>
+<div class="steps"><div class="dot on"></div><div class="dot"></div><div class="dot"></div><span class="step-txt">1 of 3</span></div>
+<div class="date-row">
+<div class="date-pill" onclick="selDate(this)"><div class="dp-day">Sun</div><div class="dp-num">13</div></div>
+<div class="date-pill today sel" onclick="selDate(this)"><div class="dp-day">Mon</div><div class="dp-num">14</div></div>
+<div class="date-pill" onclick="selDate(this)"><div class="dp-day">Tue</div><div class="dp-num">15</div></div>
+<div class="date-pill" onclick="selDate(this)"><div class="dp-day">Wed</div><div class="dp-num">16</div></div>
+<div class="date-pill" onclick="selDate(this)"><div class="dp-day">Thu</div><div class="dp-num">17</div></div>
+<div class="date-pill" onclick="selDate(this)"><div class="dp-day">Fri</div><div class="dp-num">18</div></div>
+<div class="date-pill" onclick="selDate(this)"><div class="dp-day">Sat</div><div class="dp-num">19</div></div>
+</div>
+<div class="filters">
+<button class="chip sel" onclick="selChip(this)">All</button>
+<button class="chip" onclick="selChip(this)">Strength</button>
+<button class="chip" onclick="selChip(this)">Cardio</button>
+<button class="chip" onclick="selChip(this)">Yoga</button>
+<button class="chip" onclick="selChip(this)">Spin</button>
+</div>
+<div class="scroll" style="padding-bottom:12px">
+<div class="class-list">
+<div class="class-item" onclick="goTo('s-detail','in')"><div class="ci-time"><div class="ci-t">6:00</div><div class="ci-ap">AM</div></div><div class="ci-line"></div><div class="ci-info"><div class="ci-name">Boot Camp</div><div class="ci-meta">Big Jim · Downtown · 45 min</div></div><div class="ci-spots few">3 left</div></div>
+<div class="class-item" onclick="goTo('s-detail','in')"><div class="ci-time"><div class="ci-t">7:30</div><div class="ci-ap">AM</div></div><div class="ci-line"></div><div class="ci-info"><div class="ci-name">Spin Class</div><div class="ci-meta">Maria Chen · Westside · 45 min</div></div><div class="ci-spots ok">8 left</div></div>
+<div class="class-item" onclick="goTo('s-detail','in')"><div class="ci-time"><div class="ci-t">9:00</div><div class="ci-ap">AM</div></div><div class="ci-line"></div><div class="ci-info"><div class="ci-name">HIIT Training</div><div class="ci-meta">Sarah K. · Eastside · 60 min</div></div><div class="ci-spots ok">12 left</div></div>
+<div class="class-item full"><div class="ci-time"><div class="ci-t">10:30</div><div class="ci-ap">AM</div></div><div class="ci-line"></div><div class="ci-info"><div class="ci-name">Power Yoga</div><div class="ci-meta">Lisa M. · Downtown · 60 min</div></div><div class="ci-spots none">Full</div></div>
+<div class="class-item" onclick="goTo('s-detail','in')"><div class="ci-time"><div class="ci-t">12:00</div><div class="ci-ap">PM</div></div><div class="ci-line"></div><div class="ci-info"><div class="ci-name">Strength Basics</div><div class="ci-meta">Tom R. · Northside · 45 min</div></div><div class="ci-spots ok">15 left</div></div>
+<div class="class-item" onclick="goTo('s-detail','in')"><div class="ci-time"><div class="ci-t">5:30</div><div class="ci-ap">PM</div></div><div class="ci-line"></div><div class="ci-info"><div class="ci-name">Evening Run Club</div><div class="ci-meta">Big Jim · All Locations · 45 min</div></div><div class="ci-spots few">6 left</div></div>
+<div class="class-item" onclick="goTo('s-detail','in')"><div class="ci-time"><div class="ci-t">7:00</div><div class="ci-ap">PM</div></div><div class="ci-line"></div><div class="ci-info"><div class="ci-name">Core & Abs</div><div class="ci-meta">Maria Chen · Westside · 30 min</div></div><div class="ci-spots ok">11 left</div></div>
+</div>
+</div>
+</div>
+
+<!-- DETAIL -->
+<div class="screen" id="s-detail">
+<div class="sbar"><span class="sbar-time">9:41</span><div class="sbar-icons"><span>●●●</span></div></div>
+<button class="back" onclick="goBack('s-schedule')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Schedule</button>
+<div class="steps" style="padding-top:8px"><div class="dot done"></div><div class="dot on"></div><div class="dot"></div><span class="step-txt">2 of 3</span></div>
+<div class="scroll" style="padding-bottom:12px">
+<div class="detail-head">
+<div class="detail-type">Strength · 45 min</div>
+<div class="detail-name">Boot Camp</div>
+<div class="detail-trainer">Big Jim Patterson · Downtown Flagship</div>
+<div class="detail-chips"><span class="dchip hi">Mon Apr 14</span><span class="dchip hi">6:00 AM</span><span class="dchip">All Levels</span></div>
+</div>
+<div class="detail-section">
+<div class="ds-title">Availability</div>
+<div class="avail-bar-row"><span><strong>3 spots</strong> remaining</span><span>17 / 20</span></div>
+<div class="avail-track"><div class="avail-fill" style="width:85%"></div></div>
+</div>
+<div class="detail-section">
+<div class="ds-title">About</div>
+<div class="desc-text">High-intensity interval training combining strength movements and cardio bursts. Perfect for all fitness levels. Bring water and a towel.</div>
+</div>
+<div class="detail-section">
+<div class="ds-title">Instructor</div>
+<div class="trainer-row"><div class="trainer-av"><span>BJ</span></div><div><div class="trainer-name">Big Jim Patterson</div><div class="trainer-role">Head Trainer · 12 years at IronCore</div></div></div>
+</div>
+<div class="book-bar">
+<button class="book-btn" onclick="goTo('s-confirm','in')">
+<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+Book This Class
+</button>
+</div>
+</div>
+</div>
+
+<!-- CONFIRM -->
+<div class="screen" id="s-confirm">
+<div class="sbar"><span class="sbar-time">9:41</span><div class="sbar-icons"><span>●●●</span></div></div>
+<button class="back" onclick="goBack('s-detail')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Class Detail</button>
+<div class="steps" style="padding-top:8px"><div class="dot done"></div><div class="dot done"></div><div class="dot on"></div><span class="step-txt">3 of 3</span></div>
+<div class="scroll" style="padding-bottom:12px">
+<div class="confirm-body">
+<div class="confirm-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+<div class="confirm-tag">Booking Confirmed</div>
+<div class="confirm-title">You're in.</div>
+<div class="confirm-sub">See you at 6:00 AM on Monday. Push notification sent.</div>
+<div class="confirm-card">
+<div class="cc-row"><span class="cc-l">Class</span><span class="cc-v">Boot Camp</span></div>
+<div class="cc-row"><span class="cc-l">Date & Time</span><span class="cc-v">Mon Apr 14 · 6:00 AM</span></div>
+<div class="cc-row"><span class="cc-l">Instructor</span><span class="cc-v">Big Jim Patterson</span></div>
+<div class="cc-row"><span class="cc-l">Location</span><span class="cc-v">Downtown Flagship</span></div>
+</div>
+<div class="confirm-actions">
+<button class="btn-prim" onclick="goTo('s-home','back')">Done</button>
+<button class="btn-sec" onclick="goTo('s-schedule','in')">Book Another</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- CHECK-IN -->
+<div class="screen" id="s-checkin">
+<div class="sbar"><span class="sbar-time">9:41</span><div class="sbar-icons"><span>●●●</span></div></div>
+<button class="back" onclick="goBack('s-home')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Home</button>
+<div class="pg-head"><div class="pg-label">US-02 · Mobile Check-In</div><div class="pg-title">Check In</div></div>
+<div class="scroll" style="padding-bottom:12px">
+<div class="ci-member-row">
+<div class="ci-avatar"><span>JR</span></div>
+<div><div class="ci-mem-name">Jessica Ramirez</div><div class="ci-mem-id">MEMBER · IC-3412 · ACTIVE</div></div>
+</div>
+<div class="qr-section">
+<div class="qr-label">Scan to Check In</div>
+<div class="qr-box">
+<div class="qr-corner tl"></div><div class="qr-corner tr"></div><div class="qr-corner bl"></div>
+<div class="qr-center"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+</div>
+<div class="qr-id">IC · 2847 · 5K2X</div>
+</div>
+<div style="padding:12px 18px 0">
+<div style="font-family:var(--fm);font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Select Location</div>
+<div class="loc-row">
+<button class="loc-btn sel" onclick="selLoc(this)">Downtown</button>
+<button class="loc-btn" onclick="selLoc(this)">Westside</button>
+<button class="loc-btn" onclick="selLoc(this)">Eastside</button>
+</div>
+</div>
+<button class="ci-btn" onclick="goTo('s-ci-success','in')">
+<svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Check In Now
+</button>
+<div class="recent-list">
+<div class="rl-label">Recent Visits</div>
+<div class="rl-item"><div><div class="rl-date">Fri Apr 11</div><div class="rl-name">Boot Camp</div><div class="rl-loc">Downtown · 6:00 AM</div></div><div class="rl-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></div>
+<div class="rl-item"><div><div class="rl-date">Wed Apr 9</div><div class="rl-name">HIIT Training</div><div class="rl-loc">Eastside · 7:30 AM</div></div><div class="rl-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></div>
+<div class="rl-item"><div><div class="rl-date">Mon Apr 7</div><div class="rl-name">Spin Class</div><div class="rl-loc">Westside · 9:00 AM</div></div><div class="rl-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></div>
+</div>
+</div>
+<div class="bnav">
+<button class="bnav-item" onclick="goBack('s-home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></button>
+<button class="bnav-item" onclick="goTo('s-schedule','in')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Schedule</span></button>
+<button class="bnav-item on"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>Check In</span></button>
+<button class="bnav-item"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></button>
+</div>
+</div>
+
+<!-- CI SUCCESS -->
+<div class="screen" id="s-ci-success">
+<div class="sbar"><span class="sbar-time">9:41</span><div class="sbar-icons"><span>●●●</span></div></div>
+<div class="ci-success-head">
+<div class="success-icon-lg"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+<div class="confirm-tag" style="color:var(--green)">Check-In Complete</div>
+<div class="pg-title" style="margin-top:4px">Welcome back.</div>
+<div style="font-size:11px;color:var(--sub);margin-top:6px">Downtown Flagship · 9:41 AM</div>
+</div>
+<div class="detail-rows">
+<div class="dr-item"><span class="dr-l">Member</span><span class="dr-v">Jessica Ramirez</span></div>
+<div class="dr-item"><span class="dr-l">Location</span><span class="dr-v">Downtown</span></div>
+<div class="dr-item"><span class="dr-l">Time</span><span class="dr-v">9:41 AM · Monday</span></div>
+<div class="dr-item"><span class="dr-l">Visit Streak</span><span class="dr-v green">8 Days 🔥</span></div>
+<div class="dr-item"><span class="dr-l">Next Class</span><span class="dr-v">Boot Camp · Tue 6AM</span></div>
+</div>
+<div style="padding:14px 18px">
+<button class="btn-sec" onclick="goBack('s-home')" style="display:flex;align-items:center;justify-content:center;gap:8px">Back to Home</button>
+</div>
+</div>
+
+<!-- PREMIUM -->
+<div class="screen" id="s-premium">
+<div class="sbar"><span class="sbar-time">9:41</span><div class="sbar-icons"><span>●●●</span></div></div>
+<button class="back" onclick="goBack('s-home')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Home</button>
+<div class="pg-head"><div class="pg-label">US-07 · Premium Upgrade</div><div class="pg-title">Choose Your Plan</div></div>
+<div class="steps"><div class="dot on"></div><div class="dot"></div><div class="dot"></div><span class="step-txt">1 of 3</span></div>
+<div class="billing-toggle">
+<button class="bt-tab" onclick="setBilling(this,'monthly')">Monthly</button>
+<button class="bt-tab on" onclick="setBilling(this,'annual')">Annual · Save 17%</button>
+</div>
+<div class="scroll" style="padding-bottom:12px">
+<div class="plan-list">
+<div class="plan-card" id="pc-standard" onclick="selPlan('standard')">
+<div class="pc-top"><div><div class="pc-name">Standard</div><div class="pc-current">Your current plan</div></div><div><div class="pc-price" id="std-price">$65</div><div class="pc-billing">/month</div></div></div>
+<div class="pc-div"></div>
+<div class="pc-feat"><svg viewBox="0 0 24 24" style="stroke:var(--green);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg><span>Unlimited gym access</span></div>
+<div class="pc-feat"><svg viewBox="0 0 24 24" style="stroke:var(--green);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg><span>Mobile class booking</span></div>
+<div class="pc-feat"><svg viewBox="0 0 24 24" style="stroke:var(--green);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg><span>QR check-in</span></div>
+<div class="pc-feat dim"><svg viewBox="0 0 24 24" style="stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><span>On-demand classes</span></div>
+<div class="pc-feat dim"><svg viewBox="0 0 24 24" style="stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><span>Nutrition coaching</span></div>
+<div class="pc-feat dim"><svg viewBox="0 0 24 24" style="stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><span>Advanced analytics</span></div>
+</div>
+<div class="plan-card featured sel" id="pc-premium" onclick="selPlan('premium')">
+<div class="feat-badge">Most Popular</div>
+<div class="pc-top"><div><div class="pc-name" style="color:var(--blue)">Premium</div><div class="pc-current" style="color:var(--blue);opacity:.6">Everything unlocked</div></div><div><div class="pc-price hi" id="prem-price">$68</div><div class="pc-billing" id="prem-billing">/mo · billed annually</div></div></div>
+<div class="pc-div" style="background:var(--blue-line)"></div>
+<div class="pc-feat"><svg viewBox="0 0 24 24" style="stroke:var(--blue);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg><span>Everything in Standard</span></div>
+<div class="pc-feat"><svg viewBox="0 0 24 24" style="stroke:var(--blue);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg><span>Unlimited on-demand classes</span></div>
+<div class="pc-feat"><svg viewBox="0 0 24 24" style="stroke:var(--blue);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg><span>1-on-1 nutrition coaching</span></div>
+<div class="pc-feat"><svg viewBox="0 0 24 24" style="stroke:var(--blue);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg><span>Advanced analytics</span></div>
+<div class="pc-feat"><svg viewBox="0 0 24 24" style="stroke:var(--blue);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg><span>Priority booking · 48hr early access</span></div>
+</div>
+</div>
+<div class="save-note"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Annual saves you $164/year · Cancel anytime</span></div>
+<div class="upgrade-wrap">
+<button class="upgrade-btn" onclick="goTo('s-payment','in')"><svg viewBox="0 0 24 24"><path d="M2 20h20M5 20l-2-8 5 4 4-8 4 8 5-4-2 8"/></svg>Upgrade to Premium</button>
+<div class="upgrade-legal">Billed via Stripe · PCI-DSS secured · Cancel anytime</div>
+</div>
+</div>
+</div>
+
+<!-- PAYMENT -->
+<div class="screen" id="s-payment">
+<div class="sbar"><span class="sbar-time">9:41</span><div class="sbar-icons"><span>●●●</span></div></div>
+<button class="back" onclick="goBack('s-premium')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Choose Plan</button>
+<div class="pg-head"><div class="pg-label">Secure Checkout</div><div class="pg-title">Payment</div></div>
+<div class="steps"><div class="dot done"></div><div class="dot on"></div><div class="dot"></div><span class="step-txt">2 of 3</span></div>
+<div class="scroll" style="padding-bottom:12px">
+<div class="pay-summary">
+<div class="pay-row"><span class="pay-l">Plan</span><span class="pay-v">IronCore Premium</span></div>
+<div class="pay-row"><span class="pay-l">Billing</span><span class="pay-v">Annual · $816/yr</span></div>
+<div class="pay-row"><span class="pay-l">You Save</span><span class="pay-v hi">$164/year</span></div>
+<div class="pay-row" style="padding-top:10px;margin-top:4px;border-top:1px solid var(--border-hi)"><span class="pay-l" style="font-size:10px">Due Today</span><span class="pay-v hi lg">$68.00</span></div>
+</div>
+<div class="field-stack">
+<div class="field"><label>Cardholder Name</label><div class="field-input">Jessica Ramirez</div></div>
+<div class="field"><label>Card Number</label><div class="field-input"><span>•••• •••• •••• 4211</span><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div></div>
+<div class="field-grid">
+<div class="field"><label>Expiry</label><div class="field-input">09 / 27</div></div>
+<div class="field"><label>CVV</label><div class="field-input">•••</div></div>
+</div>
+</div>
+<div class="pay-btn-wrap">
+<button class="pay-btn" onclick="goTo('s-premium-success','in')"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Pay $68.00</button>
+</div>
+<div class="pay-secure"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><span>PCI-DSS Secured · Powered by Stripe</span></div>
+</div>
+</div>
+
+<!-- PREMIUM SUCCESS -->
+<div class="screen" id="s-premium-success">
+<div class="sbar"><span class="sbar-time">9:41</span><div class="sbar-icons"><span>●●●</span></div></div>
+<div class="psuc-head">
+<div class="psuc-icon"><svg viewBox="0 0 24 24"><path d="M2 20h20M5 20l-2-8 5 4 4-8 4 8 5-4-2 8"/></svg></div>
+<div class="confirm-tag" style="color:var(--blue)">Welcome to Premium</div>
+<div class="pg-title" style="margin-top:4px">You're upgraded.</div>
+<div style="font-size:11px;color:var(--sub);margin-top:6px">6 features now unlocked on your account.</div>
+</div>
+<div class="unlocked-list">
+<div class="ul-label">Now Unlocked</div>
+<div class="ul-item"><div class="ul-icon"><svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div><div><div class="ul-name">On-Demand Classes</div><div class="ul-sub">500+ classes · available 24/7</div></div></div>
+<div class="ul-item"><div class="ul-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><div class="ul-name">Nutrition Coaching</div><div class="ul-sub">Personalized meal plans · macros</div></div></div>
+<div class="ul-item"><div class="ul-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><div><div class="ul-name">Advanced Analytics</div><div class="ul-sub">Performance trends · recovery</div></div></div>
+<div class="ul-item"><div class="ul-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="ul-name">Priority Booking</div><div class="ul-sub">48hr early access to all classes</div></div></div>
+</div>
+<div style="padding:0 18px 16px;display:flex;flex-direction:column;gap:8px">
+<button class="btn-prim" onclick="goTo('s-home','back')">Go to Dashboard</button>
+<div style="text-align:center;font-family:var(--fm);font-size:8px;color:var(--muted);letter-spacing:.06em;padding-top:2px">Receipt #IC-8821 · jessica.ramirez@email.com</div>
+</div>
+</div>
+
+</div></div>
+<div class="screen-lbl" id="screen-lbl">Home Dashboard</div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+<div class="scard">
+<div class="scard-title" id="flow-title">Class Booking — US-01</div>
+<div class="flow-step done" id="fs-1"><div class="fs-num">✓</div><div><div class="fs-name">Home Dashboard</div><div class="fs-desc">Overview, quick actions</div></div></div>
+<div class="flow-step on" id="fs-2"><div class="fs-num">2</div><div><div class="fs-name">Browse Schedule</div><div class="fs-desc">Date filter, real-time capacity</div></div></div>
+<div class="flow-step dim" id="fs-3"><div class="fs-num">3</div><div><div class="fs-name">Class Detail</div><div class="fs-desc">Instructor, availability, book</div></div></div>
+<div class="flow-step dim" id="fs-4"><div class="fs-num">4</div><div><div class="fs-name">Confirmed</div><div class="fs-desc">Summary + calendar sync</div></div></div>
+</div>
+<div class="scard">
+<div class="scard-title">Design Note</div>
+<div class="annot"><div class="annot-label">Current Screen</div><div class="annot-text" id="annot-text">Date strip + filters let members find classes without calling the gym. Real-time spot count (42% member demand) sets expectations.</div></div>
+</div>
+<div class="scard">
+<div class="scard-title">Value Drivers</div>
+<div class="kpi-stack" id="kpi-data">
+<div class="kpi-item"><span class="kpi-l">Churn Target</span><span class="kpi-v blue">26% → 18%</span></div>
+<div class="kpi-item"><span class="kpi-l">Member Demand</span><span class="kpi-v">42%</span></div>
+<div class="kpi-item"><span class="kpi-l">Value Driver</span><span class="kpi-v green">Engagement</span></div>
+</div>
+</div>
+</div>
+
+</div></div>
+
+<script>
+const NAMES={'s-home':'Home Dashboard','s-schedule':'Browse Schedule','s-detail':'Class Detail','s-confirm':'Booking Confirmed','s-checkin':'Check-In · QR','s-ci-success':'Check-In Success','s-premium':'Premium Plan Selection','s-payment':'Secure Checkout','s-premium-success':'Upgrade Complete'};
+const NOTES={'s-home':'Home leads with name + streak — preserving personal touch. Quick actions surface all three flows in under 2 taps.','s-schedule':'Date strip + filters eliminate the need to call the gym. Real-time spot count (42% demand) sets expectations before committing.','s-detail':'Availability bar and instructor card keep Big Jim visible — members see a person, not a system. Addresses Frank Torres\'s "corporate gym" fear.','s-confirm':'"You\'re in." — direct and human. Push notification within 30s per US-01 acceptance criteria. Calendar sync for Jessica\'s productivity.','s-checkin':'QR front-and-center, one tap from home. Location selector maps to 12-location reality. Front-desk fallback reassures Linda Chen\'s segment.','s-ci-success':'"Welcome back." mirrors Jen at the front desk. Streak rewards Tyler\'s habit loop. Directly answers Dorothy Chen\'s resistance.','s-premium':'Locked features create visible upgrade motivation. Annual anchor ($68) vs monthly ($85) reduces friction. Directly addresses ARPU gap from Pres. 1 feedback.','s-payment':'Pre-filled card = one-tap checkout for Jessica. PCI-DSS badge + Stripe addresses security NFR and member trust.','s-premium-success':'Unlocked list shows instant value — members see exactly what $20/mo extra delivers.'};
+function goTo(id){const cur=document.querySelector('.screen.active');const nxt=document.getElementById(id);if(!nxt||cur===nxt)return;cur.classList.remove('active');nxt.classList.add('active','enter');setTimeout(()=>nxt.classList.remove('enter'),250);nxt.scrollTop=0;updateSidebar(id)}
+function goBack(id){goTo(id)}
+function updateSidebar(id){
+document.getElementById('screen-lbl').textContent=NAMES[id]||id;
+document.getElementById('annot-text').textContent=NOTES[id]||'';
+const title=document.getElementById('flow-title');const kpi=document.getElementById('kpi-data');
+if(['s-premium','s-payment','s-premium-success'].includes(id)){
+title.textContent='Premium Upgrade — US-07';
+const s=[{n:'Plan Comparison',d:'Standard vs Premium · annual billing'},{n:'Secure Checkout',d:'Stripe · saved card · PCI-DSS'},{n:'Upgrade Complete',d:'Features unlocked · ARPU = $85/mo'}];
+const p={'s-premium':[1,0,0],'s-payment':[2,1,0],'s-premium-success':[2,2,1]}[id];
+upSteps(s,p);
+kpi.innerHTML='<div class="kpi-item"><span class="kpi-l">ARPU Target</span><span class="kpi-v blue">$65 → $85</span></div><div class="kpi-item"><span class="kpi-l">Revenue Goal</span><span class="kpi-v">$14.4M → $18M</span></div><div class="kpi-item"><span class="kpi-l">Value Driver</span><span class="kpi-v green">CLV</span></div>';
+}else if(['s-checkin','s-ci-success'].includes(id)){
+title.textContent='Check-In Flow — US-02';
+const s=[{n:'Home Dashboard',d:'Tap Check In from quick actions'},{n:'QR Check-In',d:'Member code · select location'},{n:'Check-In Success',d:'Confirmation + streak update'}];
+const p={'s-checkin':[2,1,0],'s-ci-success':[2,2,1]}[id];
+upSteps(s,p);
+kpi.innerHTML='<div class="kpi-item"><span class="kpi-l">Churn Target</span><span class="kpi-v blue">26% → 18%</span></div><div class="kpi-item"><span class="kpi-l">Friction Cited</span><span class="kpi-v">33%</span></div><div class="kpi-item"><span class="kpi-l">Value Driver</span><span class="kpi-v green">Activation</span></div>';
+}else{
+title.textContent='Class Booking — US-01';
+const s=[{n:'Home Dashboard',d:'Overview, quick actions'},{n:'Browse Schedule',d:'Date filter, real-time capacity'},{n:'Class Detail',d:'Instructor, availability, book'},{n:'Confirmed',d:'Summary + calendar sync'}];
+const p={'s-home':[1,0,0,0],'s-schedule':[2,1,0,0],'s-detail':[2,2,1,0],'s-confirm':[2,2,2,1]}[id]||[1,0,0,0];
+upSteps(s,p);
+kpi.innerHTML='<div class="kpi-item"><span class="kpi-l">Churn Target</span><span class="kpi-v blue">26% → 18%</span></div><div class="kpi-item"><span class="kpi-l">Member Demand</span><span class="kpi-v">42%</span></div><div class="kpi-item"><span class="kpi-l">Value Driver</span><span class="kpi-v green">Engagement</span></div>';
+}}
+function upSteps(steps,prog){for(let i=1;i<=4;i++){const el=document.getElementById('fs-'+i);if(!el)continue;if(i>steps.length){el.style.display='none';continue}el.style.display='flex';el.querySelector('.fs-name').textContent=steps[i-1].n;el.querySelector('.fs-desc').textContent=steps[i-1].d;el.classList.remove('on','done','dim');const s=prog[i-1]||0;if(s===2){el.classList.add('done');el.querySelector('.fs-num').textContent='✓'}else if(s===1){el.classList.add('on');el.querySelector('.fs-num').textContent=i}else{el.classList.add('dim');el.querySelector('.fs-num').textContent=i}}}
+function setFlow(flow,btn){document.querySelectorAll('.flow-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');if(flow==='booking')goTo('s-home');else if(flow==='checkin')goTo('s-checkin');else goTo('s-premium')}
+function selDate(el){document.querySelectorAll('.date-pill').forEach(d=>d.classList.remove('sel'));el.classList.add('sel')}
+function selChip(el){document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));el.classList.add('sel')}
+function selLoc(el){document.querySelectorAll('.loc-btn').forEach(b=>b.classList.remove('sel'));el.classList.add('sel')}
+function selPlan(p){document.getElementById('pc-standard').classList.remove('sel');document.getElementById('pc-premium').classList.remove('sel');document.getElementById('pc-'+p).classList.add('sel')}
+function setBilling(el,billing){document.querySelectorAll('.bt-tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');const pp=document.getElementById('prem-price');const pb=document.getElementById('prem-billing');if(billing==='monthly'){if(pp)pp.textContent='$85';if(pb)pb.textContent='/month · billed monthly'}else{if(pp)pp.textContent='$68';if(pb)pb.textContent='/mo · billed annually'}}
+</script>
+</body>
+</html>
